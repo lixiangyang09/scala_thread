@@ -5,43 +5,29 @@ import java.util.concurrent._
 
 
 object Example {
-  val numberThread = 10
-  val blockQueue = new ArrayBlockingQueue[(Int,String)](numberThread)
-  val writer = new FileWriter("test")
-  val result = new Array[(Int, String)](numberThread)
-  val action = new Runnable {
-    override def run() = {
-      for (i <- 0 until numberThread){
-        writer.write(result(i).toString())
-        result(i) = (0, "*")
-      }
-    }
-  }
-  val barrier = new CyclicBarrier(numberThread, action)
-  
+
+  val concorrent = 3
+  val userList = new ArrayBlockingQueue[String](concorrent)
+
   def main(args: Array[String]): Unit = {
-    println("start producer")
-    val producer = new Producer(blockQueue,numberThread)
-    producer.start()
+    val users = Array("abc", "lxy", "dbg", "xiaoming")
+    val mainWorkers = Executors.newFixedThreadPool(concorrent)
+    for (i <- 0 until concorrent) mainWorkers.execute(new MainWorker(userList,concorrent))
 
-    println("start consumers")
-//    val consumers = for (i <- 0 until numberThread) yield {
-//      new Consumer(blockQueue, barrier,result)
-//    }
-//    consumers.foreach(_.start())
-//    consumers.foreach(_.join())
-    val executor = Executors.newFixedThreadPool(numberThread)
-    for (i <- 0 until numberThread) executor.execute(new Consumer(blockQueue, barrier,result))
-    println("join")
-    producer.join()
 
-    executor.shutdown()
-    executor.awaitTermination(Long.MaxValue,TimeUnit.NANOSECONDS)
-
-    result.foreach(s => {
-      if (s != (0,"*")) writer.write(s.toString())
+    users.foreach(usr => {
+      userList.put(usr)
+      println(s"put user in to userList: $usr")
     })
-    println("all finished")
-    writer.close()
+
+    for (i <-0 until concorrent) {
+      userList.put("noUser")
+      println(s"put user in to userList: noUser")
+    }
+
+
+    mainWorkers.shutdown()
+    mainWorkers.awaitTermination(Long.MaxValue, TimeUnit.NANOSECONDS)
+    println("all done")
   }
 }

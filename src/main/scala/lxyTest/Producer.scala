@@ -8,7 +8,7 @@ import scala.util.Random
   * Created by lxy on 2017/2/22.
   */
 class Producer(queue:ArrayBlockingQueue[(Int,String)], numberThread:Int) extends Thread{
-  val totData = 9997
+  val totData = 99
   val random = new Random()
   override def run():Unit = {
     for (i <- 0 until totData){
